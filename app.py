@@ -113,4 +113,4 @@ def delete_user(id):
 
 #Start app
 if __name__ == "__main__":
-    app.run(host='192.168.1.86',debug=True)
+    app.run(host='192.168.20.50',debug=True)
