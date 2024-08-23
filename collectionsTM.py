@@ -46,3 +46,50 @@ class Usuario:
             'estadoUsuario': self.get_estadoUsuario(),
             'rolUsuario': self.get_rolUsuario()
         }
+
+class SitiosTuristicos:
+    def __init__(self, nombreSitiosTuristicos, descripcionSitiosTuristicos, altitudSitiosTuristicos, latitudSitiosTuristicos, horariosSitiosTuristicos, estadoSitiosTuristicos):
+        self.set_nombreSitiosTuristicos(nombreSitiosTuristicos)
+        self.set_descripcionSitiosTuristicos(descripcionSitiosTuristicos)
+        self.set_estadoSitiosTuristicos(estadoSitiosTuristicos)
+        self.set_altitudSitiosTuristicos(altitudSitiosTuristicos)
+        self.set_latitudSitiosTuristicos(latitudSitiosTuristicos)
+        self.set_horariosSitiosTuristicos(horariosSitiosTuristicos)
+    
+    #Setters
+    def set_nombreSitiosTuristicos(self, nombreSitiosTuristicos):
+        self.__nombreSitiosTuristicos = nombreSitiosTuristicos
+    def set_descripcionSitiosTuristicos(self, descripcionSitiosTuristicos):
+        self.__descripcionSitiosTuristicos = descripcionSitiosTuristicos
+    def set_altitudSitiosTuristicos(self, altitudSitiosTuristicos):
+        self.__altitudSitiosTuristicos = altitudSitiosTuristicos
+    def set_latitudSitiosTuristicos(self, latitudSitiosTuristicos):
+        self.__latitudSitiosTuristicos = latitudSitiosTuristicos
+    def set_horariosSitiosTuristicos(self, horariosSitiosTuristicos):
+        self.__horariosSitiosTuristicos = horariosSitiosTuristicos
+    def set_estadoSitiosTuristicos(self, estadoSitiosTuristicos):
+        self.__estadoSitiosTuristicos = estadoSitiosTuristicos
+
+    #Getters
+    def get_nombreSitiosTuristicos(self):
+        return self.__nombreSitiosTuristicos
+    def get_descripcionSitiosTuristicos(self):
+        return self.__descripcionSitiosTuristicos
+    def get_altitudSitiosTuristicos(self):
+        return self.__altitudSitiosTuristicos
+    def get_latitudSitiosTuristicos(self):
+        return self.__latitudSitiosTuristicos
+    def get_horariosSitiosTuristicos(self):
+        return self.__horariosSitiosTuristicos
+    def get_estadoSitiosTuristicos(self):
+        return self.__estadoSitiosTuristicos
+    
+    def toDBCollection(self):
+        return{
+            'nombreSitiosTuristicos': self.get_nombreSitiosTuristicos(),
+            'descripcionSitiosTuristicos': self.get_descripcionSitiosTuristicos(),
+            'altitudSitiosTuristicos': self.get_altitudSitiosTuristicos(),
+            'latitudSitiosTuristicos': self.get_latitudSitiosTuristicos(),
+            'horariosSitiosTuristicos': self.get_horariosSitiosTuristicos(),
+            'estadoSitiosTuristicos': self.get_estadoSitiosTuristicos()
+        }

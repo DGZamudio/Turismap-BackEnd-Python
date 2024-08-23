@@ -2,12 +2,12 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from bson import ObjectId
 from database import db
-from collectionsTM import Usuario
+from collectionsTM import *
 
 app = Flask(__name__)
 CORS(app)
 
-#Routes
+#Routes Usuario
 @app.route('/register', methods=['POST'])
 def register():
     data = request.json
@@ -111,6 +111,22 @@ def delete_user(id):
     else:
         return jsonify({'mensaje': 'No se encontraron usuarios'}), 404
 
+
+#Routes SitioTuristico
+@app.route('/newitem', methods=['POST'])
+def registerTuristicPlace():
+    data = request.json
+    nuevo_sitio = SitiosTuristicos(
+            nombreSitiosTuristicos= data['nombreSitiosTuristicos'],
+            descripcionSitiosTuristicos= data['descripcionSitiosTuristicos'],
+            altitudSitiosTuristicos= data['altitudSitiosTuristicos'],
+            latitudSitiosTuristicos= data['latitudSitiosTuristicos'],
+            horariosSitiosTuristicos= data['horariosSitiosTuristicos'],
+            estadoSitiosTuristicos= data['estadoSitiosTuristicos'],
+    )
+    db.SitiosTuristicos.insert_one(nuevo_sitio.toDBCollection())
+    return jsonify({'mensaje': 'Sitio turistico creado exitosamente'}), 201
+
 #Start app
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
