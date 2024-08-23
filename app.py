@@ -58,6 +58,7 @@ def search_user():
     lista_usuarios = []
     for usuario in usuarios:
         lista_usuarios.append({
+            '_id': usuario['_id'],
             'nombreUsuario': usuario['nombreUsuario'],
             'correoUsuario': usuario['correoUsuario'],
             'contrasenaUsuario': usuario['contrasenaUsuario'],
