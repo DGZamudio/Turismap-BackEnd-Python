@@ -4,6 +4,8 @@ from bson import ObjectId
 from database import db
 from collectionsTM import *
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask import session
+
 app = Flask(__name__)
 CORS(app)
 
@@ -235,11 +237,12 @@ def login():
     
     if usuario and check_password_hash(usuario['contrasenaUsuario'], data['contrasenaUsuario']):
         # Autenticación exitosa
+        session['user_id'] = str(usuario['_id'])  # Guardar el ID del usuario en la sesión
+        
         return jsonify({
             'mensaje': 'Login exitoso',
             'usuario': {
                 '_id': str(usuario['_id']),
-                'nombreUsuario': usuario['nombreUsuario'],
                 'correoUsuario': usuario['correoUsuario'],
                 'rolUsuario': usuario['rolUsuario']
             }
@@ -247,6 +250,8 @@ def login():
     else:
         # Autenticación fallida
         return jsonify({'mensaje': 'Correo o contraseña incorrectos'}), 401
+
+
 
 
 
