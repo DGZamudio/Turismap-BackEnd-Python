@@ -1,8 +1,10 @@
+from werkzeug.security import generate_password_hash
+
 class Usuario:
     def __init__(self, nombreUsuario, correoUsuario, contrasenaUsuario, estadoUsuario, rolUsuario):
         self.set_nombreUsuario(nombreUsuario)
         self.set_correoUsuario(correoUsuario)
-        self.set_contrasenaUsuario(contrasenaUsuario)
+        self.encryptPass(contrasenaUsuario)
         self.set_estadoUsuario(estadoUsuario)
         self.set_rolUsuario(rolUsuario)
 
@@ -37,6 +39,9 @@ class Usuario:
 
     def get_rolUsuario(self):
         return self.__rolUsuario
+
+    def encryptPass(self, contrasena):
+        return self.set_contrasenaUsuario(generate_password_hash(contrasena))
 
     def toDBCollection(self):
         return {

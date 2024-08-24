@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
 from bson import ObjectId
 from database import db
@@ -81,13 +82,22 @@ def update_user(id):
     usuario = db.Usuarios.find_one({'_id': object_id})
     if usuario:
         data = request.json
-
+        contrasena_antigua = data.get('oldPass')
+        if not check_password_hash(usuario['contrasenaUsuario'], contrasena_antigua):
+            return jsonify({'mensaje': 'La contraseña antigua no es correcta'}), 400
+        
+        nueva_contrasena = data.get('contrasenaUsuario')
+        if nueva_contrasena:
+            nueva_contrasena = generate_password_hash(nueva_contrasena)
+        else:
+            nueva_contrasena = usuario['contrasenaUsuario']
+        
         db.Usuarios.update_one(
             {'_id': object_id},
             {'$set': {
                 'nombreUsuario': data.get('nombreUsuario', usuario['nombreUsuario']),
                 'correoUsuario': data.get('correoUsuario', usuario['correoUsuario']),
-                'contrasenaUsuario': data.get('contrasenaUsuario', usuario['contrasenaUsuario']),
+                'contrasenaUsuario': nueva_contrasena,
                 'estadoUsuario': data.get('estadoUsuario', usuario['estadoUsuario']),
                 'rolUsuario': data.get('rolUsuario', usuario['rolUsuario'])
             }}
