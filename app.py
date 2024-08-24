@@ -4,6 +4,8 @@ from flask_cors import CORS
 from bson import ObjectId
 from database import db
 from collectionsTM import *
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask import session
 
 app = Flask(__name__)
 CORS(app)
@@ -231,6 +233,36 @@ def delete_sitio(id):
         return jsonify({'mensaje': 'Sitio turistico eliminado exitosamente'}), 200
     else:
         return jsonify({'mensaje': 'No se encontraron sitios'}), 404
+# Función de login y validación de datos
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    
+    # Verificar si se recibieron los datos necesarios
+    if not data or not data.get('correoUsuario') or not data.get('contrasenaUsuario'):
+        return jsonify({'mensaje': 'Correo y contraseña son requeridos'}), 400
+    
+    # Buscar al usuario por correo
+    usuario = db.Usuarios.find_one({'correoUsuario': data['correoUsuario']})
+    
+    if usuario and check_password_hash(usuario['contrasenaUsuario'], data['contrasenaUsuario']):
+        # Autenticación exitosa
+        session['user_id'] = str(usuario['_id'])  # Guardar el ID del usuario en la sesión
+        
+        return jsonify({
+            'mensaje': 'Login exitoso',
+            'usuario': {
+                '_id': str(usuario['_id']),
+                'correoUsuario': usuario['correoUsuario'],
+                'rolUsuario': usuario['rolUsuario']
+            }
+        }), 200
+    else:
+        # Autenticación fallida
+        return jsonify({'mensaje': 'Correo o contraseña incorrectos'}), 401
+
+
+
 
 
 #Start app
