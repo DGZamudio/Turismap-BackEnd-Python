@@ -90,6 +90,28 @@ def update_user(id):
     usuario = db.Usuarios.find_one({'_id': object_id})
     if usuario:
         data = request.json
+        db.Usuarios.update_one(
+            {'_id': object_id},
+            {'$set': {
+                'nombreUsuario': data.get('nombreUsuario', usuario['nombreUsuario']),
+                'estadoUsuario': data.get('estadoUsuario', usuario['estadoUsuario']),
+                'rolUsuario': data.get('rolUsuario', usuario['rolUsuario'])
+            }}
+        )
+        return jsonify({'mensaje': 'Usuario actualizado exitosamente'}), 200
+    else:
+        return jsonify({'mensaje': 'El usuario no existe'}), 404
+
+@app.route('/update_pass/<id>', methods=['PUT'])
+def update_pass(id):
+    if not ObjectId.is_valid(id):
+        return jsonify({'mensaje': 'ID no válido'}), 400
+
+    object_id = ObjectId(id)
+
+    usuario = db.Usuarios.find_one({'_id': object_id})
+    if usuario:
+        data = request.json
         contrasena_antigua = data.get('oldPass')
         if not check_password_hash(usuario['contrasenaUsuario'], contrasena_antigua):
             return jsonify({'mensaje': 'La contraseña antigua no es correcta'}), 400
