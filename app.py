@@ -1,11 +1,13 @@
 from flask import Flask, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 from flask_cors import CORS
 from bson import ObjectId
 from database import db
 from collectionsTM import *
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 CORS(app)
 
 #Routes Usuario
@@ -19,9 +21,13 @@ def register():
         estadoUsuario=data['estadoUsuario'],
         rolUsuario=data['rolUsuario']
     )
-    db.Usuarios.insert_one(nuevo_usuario.toDBCollection())
-    return jsonify({'mensaje': 'Usuario creado exitosamente'}), 201
-
+    if db.Usuarios.find_one({ "correoUsuario": nuevo_usuario['correoUsuario']}):
+        return jsonify({'mensaje': 'Este usuario ya existe'}), 400
+    else:
+        result = db.Usuarios.insert_one(nuevo_usuario.toDBCollection())
+        nuevo_usuario._id = result.inserted_id
+        return nuevo_usuario.startSession()
+    
 @app.route('/get_users', methods=['GET'])
 def get_users():
     users = db.Usuarios.find()
@@ -96,7 +102,6 @@ def update_user(id):
             {'_id': object_id},
             {'$set': {
                 'nombreUsuario': data.get('nombreUsuario', usuario['nombreUsuario']),
-                'correoUsuario': data.get('correoUsuario', usuario['correoUsuario']),
                 'contrasenaUsuario': nueva_contrasena,
                 'estadoUsuario': data.get('estadoUsuario', usuario['estadoUsuario']),
                 'rolUsuario': data.get('rolUsuario', usuario['rolUsuario'])
