@@ -1,4 +1,3 @@
-from flask import jsonify, session
 from werkzeug.security import generate_password_hash
 
 class Usuario:
@@ -43,11 +42,6 @@ class Usuario:
 
     def encryptPass(self, contrasena):
         return self.set_contrasenaUsuario(generate_password_hash(contrasena))
-
-    def startSession(self):
-        session['logged_in']= True
-        session['user_id'] = str(self._id)
-        return jsonify({'mensaje': 'Usuario creado exitosamente'}), 201
 
     def toDBCollection(self):
         return {

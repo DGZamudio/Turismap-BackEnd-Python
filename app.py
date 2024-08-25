@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_cors import CORS
 from bson import ObjectId
 from database import db
@@ -10,9 +11,29 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = SECRET_KEY
+app.config['JWT_SECRET_KEY'] = app.config['SECRET_KEY']
 CORS(app)
+jwt = JWTManager(app)
 
 #Routes Usuario
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    user = db.Usuarios.find_one({'correoUsuario': data.get('correoUsuario')})
+    if user:
+        if check_password_hash(user['contrasenaUsuario'], data.get('contrasenaUsuario')):
+            identity = {
+                'user_id': str(user['_id']),
+                'nombreUsuario': user['nombreUsuario'],
+                'rolUsuario': user['rolUsuario']
+            }
+            access_token = create_access_token(identity=identity)
+            return jsonify(access_token=access_token), 200
+        else:
+            return jsonify({'mensaje': 'Contraseña incorrecta'}), 401
+    else:
+        return jsonify({'mensaje': 'No existe este usuario'}), 404
+
 @app.route('/register', methods=['POST'])
 def register():
     data = request.json
@@ -28,7 +49,13 @@ def register():
     else:
         result = db.Usuarios.insert_one(nuevo_usuario.toDBCollection())
         nuevo_usuario._id = result.inserted_id
-        return nuevo_usuario.startSession()
+        identity = {
+            'user_id': str(nuevo_usuario._id),
+            'nombreUsuario': nuevo_usuario['nombreUsuario'],
+            'rolUsuario': nuevo_usuario['rolUsuario']
+        }
+        access_token = create_access_token(identity=identity)
+        return jsonify(access_token=access_token), 200
     
 @app.route('/get_users', methods=['GET'])
 def get_users():
@@ -125,7 +152,6 @@ def update_pass(id):
         db.Usuarios.update_one(
             {'_id': object_id},
             {'$set': {
-                'nombreUsuario': data.get('nombreUsuario', usuario['nombreUsuario']),
                 'contrasenaUsuario': nueva_contrasena,
                 'estadoUsuario': data.get('estadoUsuario', usuario['estadoUsuario']),
                 'rolUsuario': data.get('rolUsuario', usuario['rolUsuario'])
@@ -264,4 +290,4 @@ def delete_sitio(id):
 
 #Start app
 if __name__ == "__main__":
-    app.run()
+    app.run(debug = True)
