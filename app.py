@@ -6,8 +6,10 @@ from bson import ObjectId
 from database import db
 from collectionsTM import *
 
+SECRET_KEY = os.getenv('SECRET_KEY')
+
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['SECRET_KEY'] = SECRET_KEY
 CORS(app)
 
 #Routes Usuario

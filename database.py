@@ -2,6 +2,8 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import os
 
+DATABASE_URL = os.getenv('DATABASE_URL')
+
 uri = os.getenv('DATABASE_URL')
 
 client = MongoClient(uri, server_api=ServerApi('1'))
