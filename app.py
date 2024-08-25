@@ -23,7 +23,7 @@ def register():
         estadoUsuario=data['estadoUsuario'],
         rolUsuario=data['rolUsuario']
     )
-    if db.Usuarios.find_one({ "correoUsuario": nuevo_usuario['correoUsuario']}):
+    if db.Usuarios.find_one({ "correoUsuario": nuevo_usuario.get_correoUsuario()}):
         return jsonify({'mensaje': 'Este usuario ya existe'}), 400
     else:
         result = db.Usuarios.insert_one(nuevo_usuario.toDBCollection())
