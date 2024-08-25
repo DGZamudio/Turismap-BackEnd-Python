@@ -51,8 +51,8 @@ def register():
         nuevo_usuario._id = result.inserted_id
         identity = {
             'user_id': str(nuevo_usuario._id),
-            'nombreUsuario': nuevo_usuario['nombreUsuario'],
-            'rolUsuario': nuevo_usuario['rolUsuario']
+            'nombreUsuario': nuevo_usuario.get_nombreUsuario(),
+            'rolUsuario': nuevo_usuario.get_rolUsuario()
         }
         access_token = create_access_token(identity=identity)
         return jsonify(access_token=access_token), 200
