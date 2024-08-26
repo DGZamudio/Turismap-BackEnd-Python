@@ -95,9 +95,9 @@ class SitiosTuristicos:
             'nombreSitiosTuristicos': self.get_nombreSitiosTuristicos(),
             'descripcionSitiosTuristicos': self.get_descripcionSitiosTuristicos(),
             'altitudSitiosTuristicos': self.get_altitudSitiosTuristicos(),
-            'altitudDelta':self.delta,
+            'altitudDelta':self.__delta,
             'latitudSitiosTuristicos': self.get_latitudSitiosTuristicos(),
-            'latitudDelta':self.delta,
+            'latitudDelta':self.__delta,
             'horariosSitiosTuristicos': self.get_horariosSitiosTuristicos(),
             'estadoSitiosTuristicos': self.get_estadoSitiosTuristicos()
         }
