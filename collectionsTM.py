@@ -59,7 +59,7 @@ class SitiosTuristicos:
         self.set_estadoSitiosTuristicos(estadoSitiosTuristicos)
         self.set_altitudSitiosTuristicos(altitudSitiosTuristicos)
         self.set_latitudSitiosTuristicos(latitudSitiosTuristicos)
-        self.Delta=delta
+        self.__delta=delta
         self.set_horariosSitiosTuristicos(horariosSitiosTuristicos)
     
     #Setters
@@ -95,9 +95,9 @@ class SitiosTuristicos:
             'nombreSitiosTuristicos': self.get_nombreSitiosTuristicos(),
             'descripcionSitiosTuristicos': self.get_descripcionSitiosTuristicos(),
             'altitudSitiosTuristicos': self.get_altitudSitiosTuristicos(),
-            'altitudDelta':self.Delta,
+            'altitudDelta':self.delta,
             'latitudSitiosTuristicos': self.get_latitudSitiosTuristicos(),
-            'latitudDelta':self.Delta,
+            'latitudDelta':self.delta,
             'horariosSitiosTuristicos': self.get_horariosSitiosTuristicos(),
             'estadoSitiosTuristicos': self.get_estadoSitiosTuristicos()
         }

@@ -186,7 +186,7 @@ def registerTuristicPlace():
             descripcionSitiosTuristicos= data['descripcionSitiosTuristicos'],
             altitudSitiosTuristicos= data['altitudSitiosTuristicos'],
             latitudSitiosTuristicos= data['latitudSitiosTuristicos'],
-            Delta='0.01',
+            delta='0.01',
             horariosSitiosTuristicos= data['horariosSitiosTuristicos'],
             estadoSitiosTuristicos= data['estadoSitiosTuristicos'],
     )
