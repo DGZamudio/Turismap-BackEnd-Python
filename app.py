@@ -185,7 +185,9 @@ def registerTuristicPlace():
             nombreSitiosTuristicos= data['nombreSitiosTuristicos'],
             descripcionSitiosTuristicos= data['descripcionSitiosTuristicos'],
             altitudSitiosTuristicos= data['altitudSitiosTuristicos'],
+            altitudDelta='0.01',
             latitudSitiosTuristicos= data['latitudSitiosTuristicos'],
+            latitudDelta='0.01',
             horariosSitiosTuristicos= data['horariosSitiosTuristicos'],
             estadoSitiosTuristicos= data['estadoSitiosTuristicos'],
     )
@@ -221,11 +223,6 @@ def searchItem():
     if ObjectId.is_valid(search_term):
         query_conditions.append({'_id': ObjectId(search_term)})
         query_conditions.append({'nombreSitiosTuristicos': {'$regex': search_term, '$options': 'i'}})
-        query_conditions.append({'descripcionSitiosTuristicos': {'$regex': search_term, '$options': 'i'}})
-        query_conditions.append({'altitudSitiosTuristicos': {'$regex': search_term, '$options': 'i'}})
-        query_conditions.append({'latitudSitiosTuristicos': {'$regex': search_term, '$options': 'i'}})
-        query_conditions.append({'horariosSitiosTuristicos': {'$regex': search_term, '$options': 'i'}})
-        query_conditions.append({'estadoSitiosTuristicos': {'$regex': search_term, '$options': 'i'}})
 
     sitios = db.SitiosTuristicos.find({'$or': query_conditions})
 
