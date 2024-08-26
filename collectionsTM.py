@@ -53,12 +53,13 @@ class Usuario:
         }
 
 class SitiosTuristicos:
-    def __init__(self, nombreSitiosTuristicos, descripcionSitiosTuristicos, altitudSitiosTuristicos, latitudSitiosTuristicos, horariosSitiosTuristicos, estadoSitiosTuristicos):
+    def __init__(self, nombreSitiosTuristicos, descripcionSitiosTuristicos, altitudSitiosTuristicos,delta, latitudSitiosTuristicos, horariosSitiosTuristicos, estadoSitiosTuristicos):
         self.set_nombreSitiosTuristicos(nombreSitiosTuristicos)
         self.set_descripcionSitiosTuristicos(descripcionSitiosTuristicos)
         self.set_estadoSitiosTuristicos(estadoSitiosTuristicos)
         self.set_altitudSitiosTuristicos(altitudSitiosTuristicos)
         self.set_latitudSitiosTuristicos(latitudSitiosTuristicos)
+        self.Delta=delta
         self.set_horariosSitiosTuristicos(horariosSitiosTuristicos)
     
     #Setters
@@ -94,7 +95,9 @@ class SitiosTuristicos:
             'nombreSitiosTuristicos': self.get_nombreSitiosTuristicos(),
             'descripcionSitiosTuristicos': self.get_descripcionSitiosTuristicos(),
             'altitudSitiosTuristicos': self.get_altitudSitiosTuristicos(),
+            'altitudDelta':self.Delta,
             'latitudSitiosTuristicos': self.get_latitudSitiosTuristicos(),
+            'latitudDelta':self.Delta,
             'horariosSitiosTuristicos': self.get_horariosSitiosTuristicos(),
             'estadoSitiosTuristicos': self.get_estadoSitiosTuristicos()
         }

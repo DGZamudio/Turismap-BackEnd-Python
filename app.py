@@ -185,9 +185,8 @@ def registerTuristicPlace():
             nombreSitiosTuristicos= data['nombreSitiosTuristicos'],
             descripcionSitiosTuristicos= data['descripcionSitiosTuristicos'],
             altitudSitiosTuristicos= data['altitudSitiosTuristicos'],
-            altitudDelta='0.01',
             latitudSitiosTuristicos= data['latitudSitiosTuristicos'],
-            latitudDelta='0.01',
+            Delta='0.01',
             horariosSitiosTuristicos= data['horariosSitiosTuristicos'],
             estadoSitiosTuristicos= data['estadoSitiosTuristicos'],
     )
@@ -204,7 +203,9 @@ def getTuristicPlaces():
             'nombreSitiosTuristicos': sitio['nombreSitiosTuristicos'],
             'descripcionSitiosTuristicos': sitio['descripcionSitiosTuristicos'],
             'altitudSitiosTuristicos': sitio['altitudSitiosTuristicos'],
+            'altitudDelta': sitio['altitudDelta'],
             'latitudSitiosTuristicos': sitio['latitudSitiosTuristicos'],
+            'latitudDelta': sitio['latitudDelta'],
             'horariosSitiosTuristicos': sitio['horariosSitiosTuristicos'],
             'estadoSitiosTuristicos': sitio['estadoSitiosTuristicos']
         })
@@ -229,11 +230,13 @@ def searchItem():
     lista_sitios = []
     for sitio in sitios:
         lista_sitios.append({
-             '_id': str(sitio['_id']),
+            '_id': str(sitio['_id']),
             'nombreSitiosTuristicos': sitio['nombreSitiosTuristicos'],
             'descripcionSitiosTuristicos': sitio['descripcionSitiosTuristicos'],
             'altitudSitiosTuristicos': sitio['altitudSitiosTuristicos'],
+            'altitudDelta': sitio['altitudDelta'],
             'latitudSitiosTuristicos': sitio['latitudSitiosTuristicos'],
+            'latitudDelta': sitio['latitudDelta'],
             'horariosSitiosTuristicos': sitio['horariosSitiosTuristicos'],
             'estadoSitiosTuristicos': sitio['estadoSitiosTuristicos']
         })
