@@ -6,6 +6,9 @@ from flask_cors import CORS
 from bson import ObjectId
 from database import db
 from collectionsTM import *
+#from dotenv import load_dotenv
+
+#load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
@@ -57,6 +60,25 @@ def register():
         access_token = create_access_token(identity=identity)
         return jsonify(access_token=access_token), 200
     
+@app.route('/addpre/<id>', methods=['PUT'])
+def addpre(id):
+    if not ObjectId.is_valid(id):
+        return jsonify({'mensaje': 'ID no válido'}), 400
+
+    object_id = ObjectId(id)
+
+    usuario = db.Usuarios.find_one({'_id': object_id})
+    
+    if usuario:
+        preferencias_nuevas = request.json.get('preferencias', [])
+        db.Usuarios.update_one(
+            {'_id': object_id},
+            {'$set': {'preferencias': preferencias_nuevas}}
+        )
+        return jsonify({'mensaje': 'Usuario actualizado exitosamente'}), 200
+    else:
+        return jsonify({'mensaje': 'El usuario no existe'}), 404
+
 @app.route('/get_users', methods=['GET'])
 def get_users():
     users = db.Usuarios.find()
@@ -68,7 +90,7 @@ def get_users():
             'correoUsuario': usuario['correoUsuario'],
             'contrasenaUsuario': usuario['contrasenaUsuario'],
             'estadoUsuario': usuario['estadoUsuario'],
-            'rolUsuario': usuario['rolUsuario']
+            'rolUsuario': usuario['rolUsuario'],
         })
     return jsonify(lista_usuarios), 200
 
