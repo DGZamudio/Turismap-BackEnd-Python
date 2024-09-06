@@ -30,6 +30,8 @@ def login():
                 'nombreUsuario': user['nombreUsuario'],
                 'rolUsuario': user['rolUsuario']
             }
+            if 'preferencias' in user:
+                identity['preferencias'] = user['preferencias']
             access_token = create_access_token(identity=identity)
             return jsonify(access_token=access_token), 200
         else:
@@ -75,7 +77,14 @@ def addpre(id):
             {'_id': object_id},
             {'$set': {'preferencias': preferencias_nuevas}}
         )
-        return jsonify({'mensaje': 'Usuario actualizado exitosamente'}), 200
+        identity = {
+            'user_id': str(object_id),
+            'nombreUsuario': usuario.get('nombreUsuario'),
+            'rolUsuario': usuario.get('rolUsuario'),
+            'preferencias': usuario.get('preferencias')
+        }
+        access_token = create_access_token(identity=identity)
+        return jsonify(access_token=access_token), 200
     else:
         return jsonify({'mensaje': 'El usuario no existe'}), 404
 
@@ -147,7 +156,15 @@ def update_user(id):
                 'rolUsuario': data.get('rolUsuario', usuario['rolUsuario'])
             }}
         )
-        return jsonify({'mensaje': 'Usuario actualizado exitosamente'}), 200
+        identity = {
+            'user_id': str(usuario['_id']),
+            'nombreUsuario': data.get('nombreUsuario'),
+            'rolUsuario': data.get('rolUsuario')
+        }
+        if 'preferencias' in usuario:
+            identity['preferencias'] = usuario['preferencias']
+        access_token = create_access_token(identity=identity)
+        return jsonify(access_token=access_token), 200
     else:
         return jsonify({'mensaje': 'El usuario no existe'}), 404
 
