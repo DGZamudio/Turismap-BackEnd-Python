@@ -228,9 +228,32 @@ def registerTuristicPlace():
             delta='0.01',
             horariosSitiosTuristicos= data['horariosSitiosTuristicos'],
             estadoSitiosTuristicos= data['estadoSitiosTuristicos'],
+            tipoSitiosTuristicos= data['tipoSitiosTuristicos']
     )
     db.SitiosTuristicos.insert_one(nuevo_sitio.toDBCollection())
     return jsonify({'mensaje': 'Sitio turistico creado exitosamente'}), 201
+
+@app.route('/filter', methods=['GET'])
+def filter():
+    data = request.json
+
+    if not data:
+        return jsonify({"error": "Preferencias necesarias"}), 400
+    
+    preferencias = data['preferencias']
+    query = {'tipoSitiosTuristicos': {'$in': preferencias}}
+    sitios = list(db.SitiosTuristicos.find(query))
+
+    result = [{'id': str(sitio['_id']), 
+               'nombreSitiosTuristicos': sitio.get('nombreSitiosTuristicos'),
+               'descripcionSitiosTuristicos': sitio.get('descripcionSitiosTuristicos'),
+               'altitudSitiosTuristicos': sitio.get('altitudSitiosTuristicos'),
+               'latitudSitiosTuristicos': sitio.get('latitudSitiosTuristicos'), 
+               'horariosSitiosTuristicos': sitio.get('horariosSitiosTuristicos'), 
+               'tipoSitiosTuristicos': sitio.get('tipoSitiosTuristicos')
+               } for sitio in sitios]
+
+    return jsonify(result)
 
 @app.route('/get_item', methods=['GET'])
 def getTuristicPlaces():

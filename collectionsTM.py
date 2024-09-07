@@ -45,7 +45,7 @@ class Usuario:
         }
 
 class SitiosTuristicos:
-    def __init__(self, nombreSitiosTuristicos, descripcionSitiosTuristicos, altitudSitiosTuristicos,delta, latitudSitiosTuristicos, horariosSitiosTuristicos, estadoSitiosTuristicos):
+    def __init__(self, nombreSitiosTuristicos, descripcionSitiosTuristicos, altitudSitiosTuristicos,delta, latitudSitiosTuristicos, horariosSitiosTuristicos, estadoSitiosTuristicos, tipoSitiosTuristicos):
         self.set_nombreSitiosTuristicos(nombreSitiosTuristicos)
         self.set_descripcionSitiosTuristicos(descripcionSitiosTuristicos)
         self.set_estadoSitiosTuristicos(estadoSitiosTuristicos)
@@ -53,6 +53,7 @@ class SitiosTuristicos:
         self.set_latitudSitiosTuristicos(latitudSitiosTuristicos)
         self.__delta=delta
         self.set_horariosSitiosTuristicos(horariosSitiosTuristicos)
+        self.set_tipoSitiosTuristicos(tipoSitiosTuristicos)
     
     #Setters
     def set_nombreSitiosTuristicos(self, nombreSitiosTuristicos):
@@ -67,6 +68,8 @@ class SitiosTuristicos:
         self.__horariosSitiosTuristicos = horariosSitiosTuristicos
     def set_estadoSitiosTuristicos(self, estadoSitiosTuristicos):
         self.__estadoSitiosTuristicos = estadoSitiosTuristicos
+    def set_tipoSitiosTuristicos(self, tipoSitiosTuristicos):
+        self.__tipoSitiosTuristicos = tipoSitiosTuristicos
 
     #Getters
     def get_nombreSitiosTuristicos(self):
@@ -81,7 +84,9 @@ class SitiosTuristicos:
         return self.__horariosSitiosTuristicos
     def get_estadoSitiosTuristicos(self):
         return self.__estadoSitiosTuristicos
-    
+    def get_tipoSitiosTuristicos(self):
+        return self.__tipoSitiosTuristicos
+
     def toDBCollection(self):
         return{
             'nombreSitiosTuristicos': self.get_nombreSitiosTuristicos(),
@@ -91,5 +96,6 @@ class SitiosTuristicos:
             'latitudSitiosTuristicos': self.get_latitudSitiosTuristicos(),
             'latitudDelta':self.__delta,
             'horariosSitiosTuristicos': self.get_horariosSitiosTuristicos(),
-            'estadoSitiosTuristicos': self.get_estadoSitiosTuristicos()
+            'estadoSitiosTuristicos': self.get_estadoSitiosTuristicos(),
+            'tipoSitiosTuristicos': self.get_tipoSitiosTuristicos()
         }
