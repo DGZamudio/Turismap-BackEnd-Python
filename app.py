@@ -193,7 +193,6 @@ def update_pass(id):
             {'$set': {
                 'contrasenaUsuario': nueva_contrasena,
                 'estadoUsuario': data.get('estadoUsuario', usuario['estadoUsuario']),
-                'rolUsuario': data.get('rolUsuario', usuario['rolUsuario'])
             }}
         )
         return jsonify({'mensaje': 'Usuario actualizado exitosamente'}), 200
