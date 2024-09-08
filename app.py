@@ -233,7 +233,7 @@ def registerTuristicPlace():
     db.SitiosTuristicos.insert_one(nuevo_sitio.toDBCollection())
     return jsonify({'mensaje': 'Sitio turistico creado exitosamente'}), 201
 
-@app.route('/filter', methods=['GET'])
+@app.route('/filter', methods=['POST'])
 def filter():
     data = request.json
 
@@ -269,6 +269,7 @@ def getTuristicPlaces():
             'latitudSitiosTuristicos': sitio['latitudSitiosTuristicos'],
             'latitudDelta': sitio['latitudDelta'],
             'horariosSitiosTuristicos': sitio['horariosSitiosTuristicos'],
+            'tipoSitiosTuristicos': sitio['tipoSitiosTuristicos'],
             'estadoSitiosTuristicos': sitio['estadoSitiosTuristicos']
         })
     return jsonify(lista_sitios), 200
