@@ -244,7 +244,7 @@ def filter():
     query = {'tipoSitiosTuristicos': {'$in': preferencias}}
     sitios = list(db.SitiosTuristicos.find(query))
 
-    result = [{'id': str(sitio['_id']), 
+    result = [{'_id': str(sitio['_id']), 
                'nombreSitiosTuristicos': sitio.get('nombreSitiosTuristicos'),
                'descripcionSitiosTuristicos': sitio.get('descripcionSitiosTuristicos'),
                'altitudSitiosTuristicos': sitio.get('altitudSitiosTuristicos'),
