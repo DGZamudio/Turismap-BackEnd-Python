@@ -233,14 +233,19 @@ def registerTuristicPlace():
     db.SitiosTuristicos.insert_one(nuevo_sitio.toDBCollection())
     return jsonify({'mensaje': 'Sitio turistico creado exitosamente'}), 201
 
-@app.route('/filter', methods=['POST'])
-def filter():
-    data = request.json
+@app.route('/filter/<id>', methods=['GET'])
+def filter(id):
+    if not ObjectId.is_valid(id):
+        return jsonify({'mensaje': 'ID no válido'}), 400
 
-    if not data:
-        return jsonify({"error": "Preferencias necesarias"}), 400
+    object_id = ObjectId(id)
     
-    preferencias = data['preferencias']
+    user = db.Usuarios.find_one({'_id': object_id})
+
+    if not user:
+        return jsonify({'mensaje': 'No se encontro usuario'}), 404
+    
+    preferencias = user['preferencias']
     query = {'tipoSitiosTuristicos': {'$in': preferencias}}
     sitios = list(db.SitiosTuristicos.find(query))
 
