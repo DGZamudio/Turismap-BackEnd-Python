@@ -6,6 +6,9 @@ from flask_cors import CORS
 from bson import ObjectId
 from database import db
 from collectionsTM import *
+import base64
+from werkzeug.utils import secure_filename
+from gridfs import GridFS
 #from dotenv import load_dotenv
 
 #load_dotenv()
@@ -17,6 +20,7 @@ app.config['SECRET_KEY'] = SECRET_KEY
 app.config['JWT_SECRET_KEY'] = app.config['SECRET_KEY']
 CORS(app)
 jwt = JWTManager(app)
+fs = GridFS(db)
 
 #Routes Usuario
 @app.route('/login', methods=['POST'])
@@ -218,19 +222,36 @@ def delete_user(id):
 #Routes SitioTuristico
 @app.route('/new_item', methods=['POST'])
 def registerTuristicPlace():
-    data = request.json
-    nuevo_sitio = SitiosTuristicos(
-            nombreSitiosTuristicos= data['nombreSitiosTuristicos'],
-            descripcionSitiosTuristicos= data['descripcionSitiosTuristicos'],
-            altitudSitiosTuristicos= data['altitudSitiosTuristicos'],
-            latitudSitiosTuristicos= data['latitudSitiosTuristicos'],
-            delta='0.01',
-            horariosSitiosTuristicos= data['horariosSitiosTuristicos'],
-            estadoSitiosTuristicos= data['estadoSitiosTuristicos'],
-            tipoSitiosTuristicos= data['tipoSitiosTuristicos']
-    )
-    db.SitiosTuristicos.insert_one(nuevo_sitio.toDBCollection())
-    return jsonify({'mensaje': 'Sitio turistico creado exitosamente'}), 201
+    nombre = request.form['nombreSitiosTuristicos']
+    descripcion = request.form['descripcionSitiosTuristicos']
+    altitud = request.form['altitudSitiosTuristicos']
+    latitud = request.form['latitudSitiosTuristicos']
+    horarios = request.form['horariosSitiosTuristicos']
+    estado = request.form['estadoSitiosTuristicos']
+    tipo = request.form['tipoSitiosTuristicos']
+
+    image = request.files.get('image')
+
+    if image and image.filename:
+        filename = secure_filename(image.filename)
+        file_id = fs.put(image, filename=filename)
+    else:
+        return jsonify({"error": "Image is missing or invalid"}), 400
+
+    site_data = {
+        "nombreSitiosTuristicos": nombre,
+        "descripcionSitiosTuristicos": descripcion,
+        "altitudSitiosTuristicos": altitud,
+        "latitudSitiosTuristicos": latitud,
+        "horariosSitiosTuristicos": horarios,
+        "estadoSitiosTuristicos": estado,
+        "tipoSitiosTuristicos": tipo,
+        "image_id": file_id 
+    }
+
+    db.SitiosTuristicos.insert_one(site_data)
+
+    return jsonify({"message": "Sitio Turistico creado"}), 200
 
 @app.route('/filter/<id>', methods=['GET'])
 def filter(id):
@@ -250,16 +271,15 @@ def filter(id):
 
     result = [{'_id': str(sitio['_id']), 
                'nombreSitiosTuristicos': sitio.get('nombreSitiosTuristicos'),
-               'descripcionSitiosTuristicos': sitio.get('descripcionSitiosTuristicos'),
                'altitudSitiosTuristicos': sitio.get('altitudSitiosTuristicos'),
                'latitudSitiosTuristicos': sitio.get('latitudSitiosTuristicos'), 
-               'horariosSitiosTuristicos': sitio.get('horariosSitiosTuristicos'), 
-               'tipoSitiosTuristicos': sitio.get('tipoSitiosTuristicos')
+               'tipoSitiosTuristicos': sitio.get('tipoSitiosTuristicos'),
+               'estadoSitiosTuristicos': sitio.get('estadoSitiosTuristicos')
                } for sitio in sitios]
 
     return jsonify(result)
 
-@app.route('/get_item', methods=['GET'])
+@app.route('/get_items', methods=['GET'])
 def getTuristicPlaces():
     sitios = db.SitiosTuristicos.find()
     lista_sitios = []
@@ -267,16 +287,42 @@ def getTuristicPlaces():
         lista_sitios.append({
             '_id': str(sitio['_id']),
             'nombreSitiosTuristicos': sitio['nombreSitiosTuristicos'],
-            'descripcionSitiosTuristicos': sitio['descripcionSitiosTuristicos'],
             'altitudSitiosTuristicos': sitio['altitudSitiosTuristicos'],
-            'altitudDelta': sitio['altitudDelta'],
             'latitudSitiosTuristicos': sitio['latitudSitiosTuristicos'],
-            'latitudDelta': sitio['latitudDelta'],
-            'horariosSitiosTuristicos': sitio['horariosSitiosTuristicos'],
             'tipoSitiosTuristicos': sitio['tipoSitiosTuristicos'],
             'estadoSitiosTuristicos': sitio['estadoSitiosTuristicos']
         })
     return jsonify(lista_sitios), 200
+
+@app.route('/get_item/<id>', methods=['GET'])
+def getTuristicPlace(id):
+    if not ObjectId.is_valid(id):
+        return jsonify({'mensaje': 'ID no válido'}), 400
+
+    object_id = ObjectId(id)
+    sitio = db.SitiosTuristicos.find_one({'_id': object_id})
+
+    if sitio:
+        file_id = sitio.get("image_id")
+        image_base64 = None
+        if file_id:
+            try:
+                file_data = fs.get(file_id)
+                image_bytes = file_data.read()
+                image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+            except Exception as e:
+                print(f"Error al obtener la imagen: {e}")
+        
+        siteInfo = {
+            '_id': str(object_id),
+            'descripcionSitiosTuristicos': sitio.get('descripcionSitiosTuristicos'),
+            'horariosSitiosTuristicos': sitio.get('horariosSitiosTuristicos'),
+            'image': image_base64
+        }
+
+        return jsonify(siteInfo), 200
+    else:
+        return jsonify({'mensaje': 'No se encontró el sitio'}), 404
 
 @app.route('/search_item', methods=['GET'])
 def searchItem():
@@ -299,12 +345,9 @@ def searchItem():
         lista_sitios.append({
             '_id': str(sitio['_id']),
             'nombreSitiosTuristicos': sitio['nombreSitiosTuristicos'],
-            'descripcionSitiosTuristicos': sitio['descripcionSitiosTuristicos'],
             'altitudSitiosTuristicos': sitio['altitudSitiosTuristicos'],
-            'altitudDelta': sitio['altitudDelta'],
             'latitudSitiosTuristicos': sitio['latitudSitiosTuristicos'],
-            'latitudDelta': sitio['latitudDelta'],
-            'horariosSitiosTuristicos': sitio['horariosSitiosTuristicos'],
+            'tipoSitiosTuristicos': sitio['tipoSitiosTuristicos'],
             'estadoSitiosTuristicos': sitio['estadoSitiosTuristicos']
         })
 
