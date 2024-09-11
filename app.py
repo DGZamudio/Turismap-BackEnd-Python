@@ -6,6 +6,7 @@ from flask_cors import CORS
 from bson import ObjectId
 from database import db
 from collectionsTM import *
+from math import ceil
 #from dotenv import load_dotenv
 
 #load_dotenv()
@@ -246,18 +247,33 @@ def filter(id):
     
     preferencias = user['preferencias']
     query = {'tipoSitiosTuristicos': {'$in': preferencias}}
-    sitios = list(db.SitiosTuristicos.find(query))
+    
+    page = request.args.get('page', 1, type=int) 
+    per_page = request.args.get('per_page', 5, type=int)
+    
+    skip = (page - 1) * per_page
+
+    sitios = list(db.SitiosTuristicos.find(query).skip(skip).limit(per_page))
+    total_sitios = db.SitiosTuristicos.count_documents(query)
+    total_pages = ceil(total_sitios / per_page)
 
     result = [{'_id': str(sitio['_id']), 
                'nombreSitiosTuristicos': sitio.get('nombreSitiosTuristicos'),
-               'descripcionSitiosTuristicos': sitio.get('descripcionSitiosTuristicos'),
                'altitudSitiosTuristicos': sitio.get('altitudSitiosTuristicos'),
                'latitudSitiosTuristicos': sitio.get('latitudSitiosTuristicos'), 
-               'horariosSitiosTuristicos': sitio.get('horariosSitiosTuristicos'), 
-               'tipoSitiosTuristicos': sitio.get('tipoSitiosTuristicos')
+               'tipoSitiosTuristicos': sitio.get('tipoSitiosTuristicos'),
+               'estadoSitiosTuristicos': sitio.get('estadoSitiosTuristicos')
                } for sitio in sitios]
 
-    return jsonify(result)
+    response = {
+        "page": page,
+        "per_page": per_page,
+        "total": total_sitios,
+        "total_pages": total_pages,
+        "data": result
+    }
+
+    return jsonify(response)
 
 @app.route('/get_item', methods=['GET'])
 def getTuristicPlaces():
