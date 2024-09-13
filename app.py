@@ -275,6 +275,41 @@ def filter(id):
 
     return jsonify(response)
 
+@app.route('/filtr', methods=['POST'])
+def filtr():
+
+    data = request.json
+    preferencias = data['sitio']
+
+    query = {'tipoSitiosTuristicos': {'$in': preferencias}}
+    
+    page = request.args.get('page', 1, type=int) 
+    per_page = request.args.get('per_page', 5, type=int)
+    
+    skip = (page - 1) * per_page
+
+    sitios = list(db.SitiosTuristicos.find(query).skip(skip).limit(per_page))
+    total_sitios = db.SitiosTuristicos.count_documents(query)
+    total_pages = ceil(total_sitios / per_page)
+
+    result = [{'_id': str(sitio['_id']), 
+               'nombreSitiosTuristicos': sitio.get('nombreSitiosTuristicos'),
+               'altitudSitiosTuristicos': sitio.get('altitudSitiosTuristicos'),
+               'latitudSitiosTuristicos': sitio.get('latitudSitiosTuristicos'), 
+               'tipoSitiosTuristicos': sitio.get('tipoSitiosTuristicos'),
+               'estadoSitiosTuristicos': sitio.get('estadoSitiosTuristicos')
+               } for sitio in sitios]
+
+    response = {
+        "page": page,
+        "per_page": per_page,
+        "total": total_sitios,
+        "total_pages": total_pages,
+        "data": result
+    }
+
+    return jsonify(response)
+
 @app.route('/get_item', methods=['GET'])
 def getTuristicPlaces():
     sitios = db.SitiosTuristicos.find()
