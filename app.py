@@ -7,9 +7,9 @@ from bson import ObjectId
 from database import db
 from collectionsTM import *
 from math import ceil
-#from dotenv import load_dotenv
+from dotenv import load_dotenv
 
-#load_dotenv()
+load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
@@ -126,7 +126,7 @@ def search_user():
     lista_usuarios = []
     for usuario in usuarios:
         lista_usuarios.append({
-            '_id': usuario['_id'],
+            '_id': str(usuario['_id']),
             'nombreUsuario': usuario['nombreUsuario'],
             'correoUsuario': usuario['correoUsuario'],
             'contrasenaUsuario': usuario['contrasenaUsuario'],
@@ -342,7 +342,7 @@ def searchItem():
 
     if ObjectId.is_valid(search_term):
         query_conditions.append({'_id': ObjectId(search_term)})
-        query_conditions.append({'nombreSitiosTuristicos': {'$regex': search_term, '$options': 'i'}})
+    query_conditions.append({'nombreSitiosTuristicos': {'$regex': search_term, '$options': 'i'}})
 
     sitios = db.SitiosTuristicos.find({'$or': query_conditions})
 
