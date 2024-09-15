@@ -10,9 +10,9 @@ from math import ceil
 import base64
 from werkzeug.utils import secure_filename
 from gridfs import GridFS
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
-load_dotenv()
+#load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
