@@ -45,7 +45,7 @@ class Usuario:
         }
 
 class SitiosTuristicos:
-    def __init__(self, nombreSitiosTuristicos, descripcionSitiosTuristicos, altitudSitiosTuristicos, latitudSitiosTuristicos, horariosSitiosTuristicos, estadoSitiosTuristicos, tipoSitiosTuristicos):
+    def __init__(self, nombreSitiosTuristicos, descripcionSitiosTuristicos, altitudSitiosTuristicos, latitudSitiosTuristicos, horariosSitiosTuristicos, estadoSitiosTuristicos, tipoSitiosTuristicos, image_id):
         self.set_nombreSitiosTuristicos(nombreSitiosTuristicos)
         self.set_descripcionSitiosTuristicos(descripcionSitiosTuristicos)
         self.set_estadoSitiosTuristicos(estadoSitiosTuristicos)
@@ -53,6 +53,7 @@ class SitiosTuristicos:
         self.set_latitudSitiosTuristicos(latitudSitiosTuristicos)
         self.set_horariosSitiosTuristicos(horariosSitiosTuristicos)
         self.set_tipoSitiosTuristicos(tipoSitiosTuristicos)
+        self.__image_id = image_id
     
     #Setters
     def set_nombreSitiosTuristicos(self, nombreSitiosTuristicos):
@@ -94,5 +95,6 @@ class SitiosTuristicos:
             'latitudSitiosTuristicos': self.get_latitudSitiosTuristicos(),
             'horariosSitiosTuristicos': self.get_horariosSitiosTuristicos(),
             'estadoSitiosTuristicos': self.get_estadoSitiosTuristicos(),
-            'tipoSitiosTuristicos': self.get_tipoSitiosTuristicos()
+            'tipoSitiosTuristicos': self.get_tipoSitiosTuristicos(),
+            'image_id': self.__image_id
         }

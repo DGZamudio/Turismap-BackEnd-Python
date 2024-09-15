@@ -7,6 +7,9 @@ from bson import ObjectId
 from database import db
 from collectionsTM import *
 from math import ceil
+import base64
+from werkzeug.utils import secure_filename
+from gridfs import GridFS
 #from dotenv import load_dotenv
 
 #load_dotenv()
@@ -18,6 +21,7 @@ app.config['SECRET_KEY'] = SECRET_KEY
 app.config['JWT_SECRET_KEY'] = app.config['SECRET_KEY']
 CORS(app)
 jwt = JWTManager(app)
+fs = GridFS(db)
 
 #Routes Usuario
 @app.route('/login', methods=['POST'])
@@ -219,7 +223,16 @@ def delete_user(id):
 #Routes SitioTuristico
 @app.route('/new_item', methods=['POST'])
 def registerTuristicPlace():
-    data = request.json
+    data = request.form
+    
+    image = request.files.get('image')
+
+    if image and image.filename:
+        filename = secure_filename(image.filename)
+        file_id = fs.put(image, filename=filename)
+    else:
+        file_id = ''
+
     nuevo_sitio = SitiosTuristicos(
             nombreSitiosTuristicos= data['nombreSitiosTuristicos'],
             descripcionSitiosTuristicos= data['descripcionSitiosTuristicos'],
@@ -227,7 +240,8 @@ def registerTuristicPlace():
             latitudSitiosTuristicos= data['latitudSitiosTuristicos'],
             horariosSitiosTuristicos= data['horariosSitiosTuristicos'],
             estadoSitiosTuristicos= data['estadoSitiosTuristicos'],
-            tipoSitiosTuristicos= data['tipoSitiosTuristicos']
+            tipoSitiosTuristicos= data['tipoSitiosTuristicos'],
+            image_id= file_id
     )
     db.SitiosTuristicos.insert_one(nuevo_sitio.toDBCollection())
     return jsonify({'mensaje': 'Sitio turistico creado exitosamente'}), 201
@@ -242,7 +256,7 @@ def filter(id):
     user = db.Usuarios.find_one({'_id': object_id})
 
     if not user:
-        return jsonify({'mensaje': 'No se encontro usuario'}), 404
+        return jsonify({'mensaje': 'No se encontró usuario'}), 404
     
     preferencias = user['preferencias']
     query = {'tipoSitiosTuristicos': {'$in': preferencias}}
@@ -252,19 +266,24 @@ def filter(id):
     
     skip = (page - 1) * per_page
 
-    sitios = list(db.SitiosTuristicos.find(query).skip(skip).limit(per_page))
+    sitios_cursor = db.SitiosTuristicos.find(query).skip(skip).limit(per_page)
     total_sitios = db.SitiosTuristicos.count_documents(query)
     total_pages = ceil(total_sitios / per_page)
 
-    result = [{'_id': str(sitio['_id']), 
-               'nombreSitiosTuristicos': sitio.get('nombreSitiosTuristicos'),
-               'descripcionSitiosTuristicos': sitio.get('descripcionSitiosTuristicos'),
-               'altitudSitiosTuristicos': sitio.get('altitudSitiosTuristicos'),
-               'latitudSitiosTuristicos': sitio.get('latitudSitiosTuristicos'),
-               'horariosSitiosTuristicos':sitio.get('horariosSitiosTuristicos'), 
-               'tipoSitiosTuristicos': sitio.get('tipoSitiosTuristicos'),
-               'estadoSitiosTuristicos': sitio.get('estadoSitiosTuristicos')
-               } for sitio in sitios]
+    result = []
+
+    for sitio in sitios_cursor:
+
+        result.append({
+            '_id': str(sitio['_id']),
+            'nombreSitiosTuristicos': sitio.get('nombreSitiosTuristicos'),
+            'descripcionSitiosTuristicos': sitio.get('descripcionSitiosTuristicos'),
+            'altitudSitiosTuristicos': sitio.get('altitudSitiosTuristicos'),
+            'latitudSitiosTuristicos': sitio.get('latitudSitiosTuristicos'),
+            'horariosSitiosTuristicos': sitio.get('horariosSitiosTuristicos'),
+            'tipoSitiosTuristicos': sitio.get('tipoSitiosTuristicos'),
+            'estadoSitiosTuristicos': sitio.get('estadoSitiosTuristicos')
+        })
 
     response = {
         "page": page,
@@ -289,19 +308,24 @@ def filtr():
     
     skip = (page - 1) * per_page
 
-    sitios = list(db.SitiosTuristicos.find(query).skip(skip).limit(per_page))
+    sitios = db.SitiosTuristicos.find(query).skip(skip).limit(per_page)
     total_sitios = db.SitiosTuristicos.count_documents(query)
     total_pages = ceil(total_sitios / per_page)
 
-    result = [{'_id': str(sitio['_id']), 
-               'nombreSitiosTuristicos': sitio.get('nombreSitiosTuristicos'),
-               'descripcionSitiosTuristicos': sitio.get('descripcionSitiosTuristicos'),
-               'altitudSitiosTuristicos': sitio.get('altitudSitiosTuristicos'),
-               'latitudSitiosTuristicos': sitio.get('latitudSitiosTuristicos'),
-               'horariosSitiosTuristicos':sitio.get('horariosSitiosTuristicos'), 
-               'tipoSitiosTuristicos': sitio.get('tipoSitiosTuristicos'),
-               'estadoSitiosTuristicos': sitio.get('estadoSitiosTuristicos')
-               } for sitio in sitios]
+    result = []
+
+    for sitio in sitios:
+
+        result.append({
+            '_id': str(sitio['_id']),
+            'nombreSitiosTuristicos': sitio.get('nombreSitiosTuristicos'),
+            'descripcionSitiosTuristicos': sitio.get('descripcionSitiosTuristicos'),
+            'altitudSitiosTuristicos': sitio.get('altitudSitiosTuristicos'),
+            'latitudSitiosTuristicos': sitio.get('latitudSitiosTuristicos'),
+            'horariosSitiosTuristicos': sitio.get('horariosSitiosTuristicos'),
+            'tipoSitiosTuristicos': sitio.get('tipoSitiosTuristicos'),
+            'estadoSitiosTuristicos': sitio.get('estadoSitiosTuristicos')
+        })
 
     response = {
         "page": page,
@@ -312,6 +336,28 @@ def filtr():
     }
 
     return jsonify(response)
+
+@app.route('/get_image/<id>', methods=['GET'])
+def getImage(id):
+    if not ObjectId.is_valid(id):
+        return jsonify({'mensaje': 'ID no válido'}), 400
+
+    object_id = ObjectId(id)
+    sitio = db.SitiosTuristicos.find_one({'_id': object_id})
+
+    file_id = sitio.get("image_id")
+    image_base64 = None
+    if file_id:
+        try:
+            file_data = fs.get(file_id)
+            image_bytes = file_data.read()
+            image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+        except Exception as e:
+            print(f"Error al obtener la imagen: {e}")
+
+    image = str(image_base64)
+
+    return (image), 200
 
 @app.route('/get_item', methods=['GET'])
 def getTuristicPlaces():
