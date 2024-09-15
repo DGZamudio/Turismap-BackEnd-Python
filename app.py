@@ -246,6 +246,31 @@ def registerTuristicPlace():
     db.SitiosTuristicos.insert_one(nuevo_sitio.toDBCollection())
     return jsonify({'mensaje': 'Sitio turistico creado exitosamente'}), 201
 
+@app.route('/last',methods=['GET'])
+def last():
+    sitios=db.SitiosTuristicos.find().limit(5)
+    result=[]
+    for sitio in sitios:
+        file_id = sitio.get("image_id")
+        image_base64 = None
+        if file_id:
+            try:
+                file_data = fs.get(file_id)
+                image_bytes = file_data.read()
+                image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+            except Exception as e:
+                print(f"Error al obtener la imagen: {e}")
+
+        image = str(image_base64)
+
+        result.append({
+            '_id': str(sitio['_id']),
+            'nombreSitiosTuristicos': sitio.get('nombreSitiosTuristicos'),
+            'estadoSitiosTuristicos': sitio.get('estadoSitiosTuristicos'),
+            'image': image
+        })
+    return jsonify(result), 200
+
 @app.route('/filter/<id>', methods=['GET'])
 def filter(id):
     if not ObjectId.is_valid(id):
