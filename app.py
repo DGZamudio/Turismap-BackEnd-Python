@@ -540,6 +540,34 @@ def calificaciones_count():
 
     return jsonify(result)
 
+@app.route('/calificaciones_sitio', methods=['GET'])
+def obtener_calificaciones_por_sitio():
+    sitio_id = request.args.get('id')  
+
+    if not sitio_id:
+        return jsonify({"error": "Se requiere el ID del sitio turístico"}), 400
+
+    try:
+        calificaciones_docs = calificaciones.find(
+            {'sitioturistico_id': ObjectId(sitio_id)},
+            {'calificacion': 1, 'comentario': 1, 'usuario_id': 1, '_id': 0}
+        )
+
+        resultados = []
+        for doc in calificaciones_docs:
+            usuario = usuarios.find_one({'_id': ObjectId(doc['usuario_id'])}, {'nombreUsuario': 1, '_id': 0})
+            if usuario:
+                resultados.append({
+                    "nombreUsuario": usuario['nombreUsuario'],  
+                    "calificacion": doc['calificacion'],
+                    "comentario": doc.get('comentario', "Sin comentario")
+                })
+
+        return jsonify({"resultados": resultados}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e), "mensaje": "Error al procesar la solicitud"}), 500
+
 
 
 #Start app
