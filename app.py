@@ -10,9 +10,9 @@ from math import ceil
 import base64
 from werkzeug.utils import secure_filename
 from gridfs import GridFS
-#from dotenv import load_dotenv
+from dotenv import load_dotenv
 
-#load_dotenv()
+load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
@@ -474,6 +474,72 @@ def delete_sitio(id):
         return jsonify({'mensaje': 'Sitio turistico eliminado exitosamente'}), 200
     else:
         return jsonify({'mensaje': 'No se encontraron sitios'}), 404
+
+
+# 
+usuarios = db['Usuarios']
+sitioturisticos = db['SitioTuristicos']
+calificaciones = db['Calificacion']
+
+@app.route('/calificar', methods=['POST'])
+def calificar():
+    data = request.json
+
+    usuario_id = data.get('usuario_id')
+    sitioturistico_id = data.get('sitioturistico_id')
+    calificacion = data.get('calificacion')
+    comentario = data.get('comentario', '')  
+
+    if not all([usuario_id, sitioturistico_id, calificacion]):
+        return jsonify({'mensaje': 'Faltan datos obligatorios'}), 400
+
+    try:
+        calificacion_data = {
+            "usuario_id": ObjectId(usuario_id),
+            "sitioturistico_id": ObjectId(sitioturistico_id),
+            "calificacion": calificacion,
+            "comentario": comentario
+        }
+        calificaciones.insert_one(calificacion_data)
+
+        return jsonify({'mensaje': 'Calificación registrada con éxito'}), 201
+
+    except Exception as e:
+        return jsonify({'mensaje': 'Error al registrar la calificación', 'error': str(e)}), 500
+
+
+# Colección
+calificaciones = db['Calificacion']
+
+@app.route('/average-site-rating', methods=['GET'])
+def calificaciones_count():
+    sitioturistico_id = request.args.get('id')
+
+    if not sitioturistico_id:
+        return jsonify({'error': 'id es requerido'}), 400
+
+    try:
+        sitioturistico_id = ObjectId(sitioturistico_id)
+    except Exception as e:
+        return jsonify({'error': 'ID inválido'}), 400
+
+    calificaciones_docs = calificaciones.find(
+        {'sitioturistico_id': sitioturistico_id},
+        {'calificacion': 1, '_id': 0}
+    )
+
+    calificaciones_list = [doc['calificacion'] for doc in calificaciones_docs]
+
+
+    sumStar = sum(calificaciones_list)
+    count = len(calificaciones_list)
+    prom = sumStar/count
+    result = {
+        'Promedio': prom
+    }
+
+    return jsonify(result)
+
 
 
 #Start app
