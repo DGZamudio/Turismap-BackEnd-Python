@@ -10,6 +10,8 @@ from math import ceil
 import base64
 from werkzeug.utils import secure_filename
 from gridfs import GridFS
+from datetime import datetime
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -568,6 +570,58 @@ def obtener_calificaciones_por_sitio():
     except Exception as e:
         return jsonify({"error": str(e), "mensaje": "Error al procesar la solicitud"}), 500
 
+
+eventos_collection = db['Evento']  
+@app.route('/eventosCreates', methods=['POST'])
+def agregar_evento():
+    data = request.json
+    
+    if not data.get('NombreSitio') or not data.get('DescripcionEvento') or not data.get('FechaInicio') or not data.get('FechaFin'):
+        return jsonify({'mensaje': 'Todos los campos son requeridos'}), 400
+
+    try:
+        fecha_inicio = datetime.strptime(data['FechaInicio'], '%Y-%m-%d')
+        fecha_fin = datetime.strptime(data['FechaFin'], '%Y-%m-%d')
+    except ValueError:
+        return jsonify({'mensaje': 'Formato de fecha inválido. Use AAAA-MM-DD.'}), 400
+    
+    nuevo_evento = {
+        'NombreSitio': data['NombreSitio'],
+        'DescripcionEvento': data['DescripcionEvento'],
+        'FechaInicio': fecha_inicio,
+        'FechaFin': fecha_fin
+    }
+
+    result = eventos_collection.insert_one(nuevo_evento)
+    
+    return jsonify({'mensaje': 'Evento agregado exitosamente', 'id': str(result.inserted_id)}), 201
+
+
+@app.route('/eventosSelect', methods=['GET'])
+def obtener_eventos():
+    try:
+        eventos = list(eventos_collection.find({}, {'_id': 0})) 
+        return jsonify(eventos), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+@app.route('/delete_evento/<id>', methods=['DELETE'])
+def delete_evento(id):
+    if not ObjectId.is_valid(id):
+        return jsonify({'mensaje': 'ID no válido'}), 400
+
+    object_id = ObjectId(id)
+    eventos_collection = db['Evento']  
+
+    evento = eventos_collection.find_one({'_id': object_id})
+
+    if evento:
+        eventos_collection.delete_one({'_id': object_id})
+        return jsonify({'mensaje': 'Evento especial eliminado exitosamente'}), 200
+    else:
+        return jsonify({'mensaje': 'No se encontraron eventos'}), 404
 
 
 #Start app
