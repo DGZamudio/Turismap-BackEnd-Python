@@ -539,7 +539,7 @@ def calificaciones_count():
     }
 
     return jsonify(result)
-
+#
 @app.route('/calificaciones_sitio', methods=['GET'])
 def obtener_calificaciones_por_sitio():
     sitio_id = request.args.get('id')  
