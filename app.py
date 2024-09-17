@@ -475,6 +475,86 @@ def delete_sitio(id):
     else:
         return jsonify({'mensaje': 'No se encontraron sitios'}), 404
 
+#Reseñas
+@app.route('/calificar', methods=['POST'])
+def calificar():
+    data = request.json
+
+    usuario_id = data.get('usuario_id')
+    sitioturistico_id = data.get('sitioturistico_id')
+    calificacion = data.get('calificacion')
+    comentario = data.get('comentario', '')  
+
+    if not all([usuario_id, sitioturistico_id, calificacion]):
+        return jsonify({'mensaje': 'Faltan datos obligatorios'}), 400
+
+    try:
+        calificacion_data = {
+            "usuario_id": ObjectId(usuario_id),
+            "sitioturistico_id": ObjectId(sitioturistico_id),
+            "calificacion": calificacion,
+            "comentario": comentario
+        }
+        db.Calificacion.insert_one(calificacion_data)
+
+        return jsonify({'mensaje': 'Calificación registrada con éxito'}), 201
+
+    except Exception as e:
+        return jsonify({'mensaje': 'Error al registrar la calificación', 'error': str(e)}), 500
+
+@app.route('/average-site-rating/<id>', methods=['GET'])
+def calificaciones_count(id):
+
+    if not id:
+        return jsonify({'error': 'id es requerido'}), 400
+
+    try:
+        id = ObjectId(id)
+    except Exception as e:
+        return jsonify({'error': 'ID inválido'}), 400
+
+    calificaciones_docs = db.Calificacion.find(
+        {'sitioturistico_id': id},
+        {'calificacion': 1, '_id': 0}
+    )
+
+    calificaciones_list = [int(doc['calificacion']) for doc in calificaciones_docs]
+
+
+    sumStar = sum(calificaciones_list)
+    count = len(calificaciones_list)
+    prom = sumStar/count
+    result = {
+        'Promedio': prom
+    }
+
+    return jsonify(result)
+
+@app.route('/calificaciones_sitio/<id>', methods=['GET'])
+def obtener_calificaciones_por_sitio(id):
+
+    if not id:
+        return jsonify({"error": "Se requiere el ID del sitio turístico"}), 400
+
+    try:
+        calificaciones_docs = db.Calificacion.find(
+            {'sitioturistico_id': ObjectId(id)}
+        ).limit(5)
+
+        resultados = []
+        for doc in calificaciones_docs:
+            usuario = db.Usuarios.find_one({'_id': ObjectId(doc['usuario_id'])}, {'nombreUsuario': 1, '_id': 0})
+            if usuario:
+                resultados.append({
+                    "nombreUsuario": usuario['nombreUsuario'],  
+                    "calificacion": doc['calificacion'],
+                    "comentario": doc.get('comentario', "Sin comentario")
+                })
+
+        return jsonify({"resultados": resultados}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e), "mensaje": "Error al procesar la solicitud"}), 500
 
 #Start app
 if __name__ == "__main__":
