@@ -10,9 +10,9 @@ from math import ceil
 import base64
 from werkzeug.utils import secure_filename
 from gridfs import GridFS
-#from dotenv import load_dotenv
+from dotenv import load_dotenv
 
-#load_dotenv()
+load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
@@ -30,6 +30,8 @@ def login():
     user = db.Usuarios.find_one({'correoUsuario': data.get('correoUsuario')})
     if user:
         if check_password_hash(user['contrasenaUsuario'], data.get('contrasenaUsuario')):
+            if user['estadoUsuario'] != '1':
+                return jsonify({'mensaje':'Usuario inactivo'}), 401
             identity = {
                 'user_id': str(user['_id']),
                 'nombreUsuario': user['nombreUsuario'],
@@ -218,9 +220,54 @@ def delete_user(id):
         return jsonify({'mensaje': 'Usuario eliminado exitosamente'}), 200
     else:
         return jsonify({'mensaje': 'No se encontraron usuarios'}), 404
+    
+@app.route('/ban/<id>/<state>', methods=['PUT'])
+def ban(id, state):
+    if not ObjectId.is_valid(id):
+        return jsonify({'mensaje': 'ID no válido'}), 400
 
+    object_id = ObjectId(id)
 
+    usuario = db.Usuarios.find_one({'_id': object_id})
+
+    if usuario:
+        if state == '1':
+            db.Usuarios.update_one(
+            {'_id': object_id},
+            {'$set': {'estadoUsuario': '0'}})
+            return jsonify({'mensaje':'Usuario desactivado'}), 200
+        else:
+            db.Usuarios.update_one(
+            {'_id': object_id},
+            {'$set': {'estadoUsuario': '1'}})
+            return jsonify({'mensaje':'Usuario activado'}), 200 
+    else:
+        return jsonify({'mensaje': 'No se encontro el usuario'}), 404
+    
 #Routes SitioTuristico
+@app.route('/banS/<id>/<state>', methods=['PUT'])
+def banS(id,state):
+    if not ObjectId.is_valid(id):
+        return jsonify({'mensaje': 'ID no válido'}), 400
+
+    object_id = ObjectId(id)
+
+    site = db.SitiosTuristicos.find_one({'_id': object_id})
+
+    if site:
+        if state == '1':
+            db.SitiosTuristicos.update_one(
+            {'_id': object_id},
+            {'$set': {'estadoSitiosTuristicos': '0'}})
+            return jsonify({'mensaje':'Sitio desactivado'}), 200
+        else:
+            db.SitiosTuristicos.update_one(
+            {'_id': object_id},
+            {'$set': {'estadoSitiosTuristicos': '1'}})
+            return jsonify({'mensaje':'Sitio activado'}), 200 
+    else:
+        return jsonify({'mensaje': 'No se encontro el sitio'}), 404  
+
 @app.route('/new_item', methods=['POST'])
 def registerTuristicPlace():
     data = request.form
@@ -284,7 +331,7 @@ def filter(id):
         return jsonify({'mensaje': 'No se encontró usuario'}), 404
     
     preferencias = user['preferencias']
-    query = {'tipoSitiosTuristicos': {'$in': preferencias}}
+    query = {'tipoSitiosTuristicos': {'$in': preferencias}, 'estadoSitiosTuristicos': '1'}
     
     page = request.args.get('page', 1, type=int) 
     per_page = request.args.get('per_page', 5, type=int)
@@ -326,7 +373,7 @@ def filtr():
     data = request.json
     preferencias = data['sitio']
 
-    query = {'tipoSitiosTuristicos': {'$in': preferencias}}
+    query = {'tipoSitiosTuristicos': {'$in': preferencias}, 'estadoSitiosTuristicos': '1'}
     
     page = request.args.get('page', 1, type=int) 
     per_page = request.args.get('per_page', 5, type=int)
@@ -413,7 +460,7 @@ def searchItem():
 
     if ObjectId.is_valid(search_term):
         query_conditions.append({'_id': ObjectId(search_term)})
-    query_conditions.append({'nombreSitiosTuristicos': {'$regex': search_term, '$options': 'i'}})
+    query_conditions.append({'nombreSitiosTuristicos': {'$regex': search_term, '$options': 'i'}, 'estadoSitiosTuristicos': '1'})
 
     sitios = db.SitiosTuristicos.find({'$or': query_conditions})
 
@@ -453,6 +500,7 @@ def update_sitio(id):
                 'altitudSitiosTuristicos': data.get('altitudSitiosTuristicos', sitio['altitudSitiosTuristicos']),
                 'latitudSitiosTuristicos': data.get('latitudSitiosTuristicos', sitio['latitudSitiosTuristicos']),
                 'horariosSitiosTuristicos': data.get('horariosSitiosTuristicos', sitio['horariosSitiosTuristicos']),
+                'tipoSitiosTuristicos': data.get('tipoSitiosTuristicos', sitio['tipoSitiosTuristicos']),
                 'estadoSitiosTuristicos': data.get('estadoSitiosTuristicos', sitio['estadoSitiosTuristicos'])
             }}
         )
@@ -480,18 +528,23 @@ def delete_sitio(id):
 def calificar():
     data = request.json
 
-    usuario_id = data.get('usuario_id')
-    sitioturistico_id = data.get('sitioturistico_id')
+    usuario_id = ObjectId(data.get('usuario_id'))
+    sitioturistico_id = ObjectId(data.get('sitioturistico_id'))
     calificacion = data.get('calificacion')
     comentario = data.get('comentario', '')  
 
     if not all([usuario_id, sitioturistico_id, calificacion]):
         return jsonify({'mensaje': 'Faltan datos obligatorios'}), 400
 
+    calif = db.Calificacion.find_one({'usuario_id': usuario_id, 'sitioturistico_id': sitioturistico_id})
+
+    if calif:
+        return jsonify({'mensaje': 'El usuario no puede hacer más de un comentario en un sitio'}), 400
+
     try:
         calificacion_data = {
-            "usuario_id": ObjectId(usuario_id),
-            "sitioturistico_id": ObjectId(sitioturistico_id),
+            "usuario_id": usuario_id,
+            "sitioturistico_id": sitioturistico_id,
             "calificacion": calificacion,
             "comentario": comentario
         }
@@ -538,7 +591,7 @@ def obtener_calificaciones_por_sitio(id):
 
     try:
         calificaciones_docs = db.Calificacion.find(
-            {'sitioturistico_id': ObjectId(id)}
+            {'sitioturistico_id': ObjectId(id), 'comentario': {'$ne': ''}}
         ).limit(5)
 
         resultados = []
@@ -555,6 +608,21 @@ def obtener_calificaciones_por_sitio(id):
 
     except Exception as e:
         return jsonify({"error": str(e), "mensaje": "Error al procesar la solicitud"}), 500
+
+@app.route('/deleteC/<id>', methods=['DELETE'])
+def deleteC(id):
+    if not ObjectId.is_valid(id):
+        return jsonify({'mensaje': 'ID no válido'}), 400
+
+    object_id = ObjectId(id)
+
+    calificacion = db.Calificacion.find_one({'_id': object_id})
+
+    if calificacion:
+        db.Calificacion.delete_one({'_id': object_id})
+        return jsonify({'mensaje': 'Calificacion eliminada exitosamente'}), 200
+    else:
+        return jsonify({'mensaje': 'No se encontraron calificaciones'}), 404
 
 #Start app
 if __name__ == "__main__":
