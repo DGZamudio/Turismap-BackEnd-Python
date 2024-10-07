@@ -1,6 +1,10 @@
 from flask import Flask, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
+import re  
+import smtplib  
+from passlib.context import CryptContext
+from email.mime.text import MIMEText 
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_cors import CORS
 from bson import ObjectId
@@ -570,60 +574,45 @@ def obtener_calificaciones_por_sitio():
     except Exception as e:
         return jsonify({"error": str(e), "mensaje": "Error al procesar la solicitud"}), 500
 
+pwd_context = CryptContext(schemes=["scrypt"], deprecated="auto")
 
-eventos_collection = db['Evento']  
-@app.route('/eventosCreates', methods=['POST'])
-def agregar_evento():
+def validar_correo(correo):
+    patron = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+    return re.match(patron, correo) is not None
+
+@app.route("/validar_correo", methods=['POST'])
+def validar_y_enviar():
     data = request.json
-    
-    if not data.get('NombreSitio') or not data.get('DescripcionEvento') or not data.get('FechaInicio') or not data.get('FechaFin'):
-        return jsonify({'mensaje': 'Todos los campos son requeridos'}), 400
+    correo = data.get('correoUsuario')  
+
+    if not validar_correo(correo):
+        return jsonify({"error": "Formato de correo inválido"}), 400
+
+    usuario = usuarios.find_one({"correoUsuario": correo})
+
+    if not usuario:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    nombre = usuario.get('nombreUsuario')
+    contrasena = usuario.get('contrasenaUsuario')  
 
     try:
-        fecha_inicio = datetime.strptime(data['FechaInicio'], '%Y-%m-%d')
-        fecha_fin = datetime.strptime(data['FechaFin'], '%Y-%m-%d')
-    except ValueError:
-        return jsonify({'mensaje': 'Formato de fecha inválido. Use AAAA-MM-DD.'}), 400
-    
-    nuevo_evento = {
-        'NombreSitio': data['NombreSitio'],
-        'DescripcionEvento': data['DescripcionEvento'],
-        'FechaInicio': fecha_inicio,
-        'FechaFin': fecha_fin
-    }
+        servidor = smtplib.SMTP("smtp.gmail.com", 587)
+        servidor.starttls()
+        servidor.login('rdraider30@gmail.com', 'b s c o k y b y c l g q h f n z')
 
-    result = eventos_collection.insert_one(nuevo_evento)
-    
-    return jsonify({'mensaje': 'Evento agregado exitosamente', 'id': str(result.inserted_id)}), 201
+        msg = MIMEText(f"Hola {nombre}, gracias por contactarnos. Aquí tienes tu nombre de usuario: {nombre}.")
+        msg["From"] = 'rdraider30@gmail.com'
+        msg["To"] = correo
+        msg["Subject"] = "Tus datos de acceso"
+        servidor.sendmail("rdraider30@gmail.com", correo, msg.as_string())
+        servidor.quit()
 
-
-@app.route('/eventosSelect', methods=['GET'])
-def obtener_eventos():
-    try:
-        eventos = list(eventos_collection.find({}, {'_id': 0})) 
-        return jsonify(eventos), 200
+        return jsonify({"message": "Correo enviado con éxito"}), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": f"Error al enviar el correo: {str(e)}"}), 500
 
 
 
-@app.route('/delete_evento/<id>', methods=['DELETE'])
-def delete_evento(id):
-    if not ObjectId.is_valid(id):
-        return jsonify({'mensaje': 'ID no válido'}), 400
-
-    object_id = ObjectId(id)
-    eventos_collection = db['Evento']  
-
-    evento = eventos_collection.find_one({'_id': object_id})
-
-    if evento:
-        eventos_collection.delete_one({'_id': object_id})
-        return jsonify({'mensaje': 'Evento especial eliminado exitosamente'}), 200
-    else:
-        return jsonify({'mensaje': 'No se encontraron eventos'}), 404
-
-
-#Start app
 if __name__ == "__main__":
-    app.run()
+    app.run(port=5001)  
