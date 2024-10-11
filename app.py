@@ -633,7 +633,7 @@ def getC(uid,lid):
 
     calif = db.Calificacion.find_one({'usuario_id':user_id, 'sitioturistico_id': local_id})
     if calif:
-        return jsonify({'calificacion': calif['calificacion']}), 200
+        return jsonify(calif), 200
     else:
         return jsonify({'mensaje': 'No se encontraron calificaciones'}), 404
 
