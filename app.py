@@ -10,9 +10,9 @@ from math import ceil
 import base64
 from werkzeug.utils import secure_filename
 from gridfs import GridFS
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
-load_dotenv()
+#load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
@@ -623,6 +623,22 @@ def deleteC(id):
         return jsonify({'mensaje': 'Calificacion eliminada exitosamente'}), 200
     else:
         return jsonify({'mensaje': 'No se encontraron calificaciones'}), 404
+
+@app.route('/getC/<uid>/<lid>', methods=['GET'])
+def getC(uid,lid):
+    if not ObjectId.is_valid(uid) and ObjectId.is_valid(lid):
+        return jsonify({'mensaje': 'ID no válido'}), 400
+
+    user_id,local_id = ObjectId(uid),ObjectId(lid)
+
+    calif = db.Calificacion.find_one({'usuario_id':user_id, 'sitioturistico_id': local_id})
+    if calif:
+        return jsonify({'calificacion': calif['calificacion']}), 200
+    else:
+        return jsonify({'mensaje': 'No se encontraron calificaciones'}), 404
+
+
+
 
 #Start app
 if __name__ == "__main__":
