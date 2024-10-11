@@ -623,7 +623,6 @@ def delete_evento(id):
     else:
         return jsonify({'mensaje': 'No se encontraron eventos'}), 404
 
-
 #Start app
 if __name__ == "__main__":
     app.run()
