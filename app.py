@@ -576,6 +576,8 @@ def calificaciones_count(id):
 
     sumStar = sum(calificaciones_list)
     count = len(calificaciones_list)
+    if count == 0:
+        count = 1
     prom = sumStar/count
     result = {
         'Promedio': prom
