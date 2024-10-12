@@ -593,7 +593,7 @@ def obtener_calificaciones_por_sitio(id):
 
     try:
         calificaciones_docs = db.Calificacion.find(
-            {'sitioturistico_id': ObjectId(id)}
+            {'sitioturistico_id': ObjectId(id), 'comentario': {'$ne': ''}}
         ).limit(5)
 
         resultados = []
