@@ -97,6 +97,7 @@ def addpre(id):
 
 @app.route('/get_users/<page>/<limit>', methods=['GET'])
 def get_users(page,limit):
+    page, limit = int(page), int(limit)
     skip = (page - 1) * limit
 
     users = db.Usuarios.find().skip(skip).limit(limit)
