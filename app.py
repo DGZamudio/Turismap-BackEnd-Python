@@ -472,7 +472,7 @@ def getTuristicPlaces(page, limit):
     }), 200
 
 
-@app.route('/get_sites', method=['GET'])
+@app.route('/get_sites', methods=['GET'])
 def getSites():
     sitios = db.SitiosTuristicos.find({'estadoSitiosTuristicos':'1'})
     lista_sitios = []
