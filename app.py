@@ -95,10 +95,14 @@ def addpre(id):
     else:
         return jsonify({'mensaje': 'El usuario no existe'}), 404
 
-@app.route('/get_users', methods=['GET'])
-def get_users():
-    users = db.Usuarios.find()
+@app.route('/get_users/<page>/<limit>', methods=['GET'])
+def get_users(page,limit):
+    skip = (page - 1) * limit
+
+    users = db.Usuarios.find().skip(skip).limit(limit)
+    total_users = db.Usuarios.count_documents({})  
     lista_usuarios = []
+
     for usuario in users:
         lista_usuarios.append({
             '_id': str(usuario['_id']),
@@ -108,7 +112,14 @@ def get_users():
             'estadoUsuario': usuario['estadoUsuario'],
             'rolUsuario': usuario['rolUsuario'],
         })
-    return jsonify(lista_usuarios), 200
+
+    return jsonify({
+        'total': total_users,
+        'page': page,
+        'pages': (total_users + limit - 1) // limit,
+        'data': lista_usuarios
+    }), 200
+
 
 @app.route('/search_user', methods=['GET'])
 def search_user():
@@ -431,9 +442,39 @@ def getImage(id):
 
     return (image), 200
 
-@app.route('/get_item', methods=['GET'])
-def getTuristicPlaces():
-    sitios = db.SitiosTuristicos.find()
+from flask import request
+
+@app.route('/get_item/<page>/<limit>', methods=['GET'])
+def getTuristicPlaces(page, limit):
+    skip = (page - 1) * limit
+
+    sitios = db.SitiosTuristicos.find().skip(skip).limit(limit)
+    total_sitios = db.SitiosTuristicos.count_documents({})  
+    lista_sitios = []
+    
+    for sitio in sitios:
+        lista_sitios.append({
+            '_id': str(sitio['_id']),
+            'nombreSitiosTuristicos': sitio['nombreSitiosTuristicos'],
+            'descripcionSitiosTuristicos': sitio['descripcionSitiosTuristicos'],
+            'altitudSitiosTuristicos': sitio['altitudSitiosTuristicos'],
+            'latitudSitiosTuristicos': sitio['latitudSitiosTuristicos'],
+            'horariosSitiosTuristicos': sitio['horariosSitiosTuristicos'],
+            'tipoSitiosTuristicos': sitio['tipoSitiosTuristicos'],
+            'estadoSitiosTuristicos': sitio['estadoSitiosTuristicos']
+        })
+
+    return jsonify({
+        'total': total_sitios,
+        'page': page,
+        'pages': (total_sitios + limit - 1) // limit,  
+        'data': lista_sitios
+    }), 200
+
+
+@app.route('/get_sites', method=['GET'])
+def getSites():
+    sitios = db.SitiosTuristicos.find({'estadoSitiosTuristicos':'1'})
     lista_sitios = []
     for sitio in sitios:
         lista_sitios.append({
