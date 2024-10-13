@@ -447,6 +447,7 @@ from flask import request
 
 @app.route('/get_item/<page>/<limit>', methods=['GET'])
 def getTuristicPlaces(page, limit):
+    page, limit = int(page), int(limit)
     skip = (page - 1) * limit
 
     sitios = db.SitiosTuristicos.find().skip(skip).limit(limit)
