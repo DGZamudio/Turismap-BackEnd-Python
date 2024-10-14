@@ -577,21 +577,18 @@ def obtener_calificaciones_por_sitio():
         return jsonify({"error": str(e), "mensaje": "Error al procesar la solicitud"}), 500
 
 
-
-
-def validar_correo(correo):
-    patron = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-    return re.match(patron, correo) is not None
-
-def generar_contrasena_temporal(length=8):
-    caracteres = string.ascii_letters + string.digits
-    return ''.join(random.choice(caracteres) for i in range(length))
-
-@app.route("/enviar_contrasena", methods=['POST'])
-def send_password():
+@app.route("/reset_contrasena", methods=['POST'])
+def reset_password():
     data = request.json
-    
     email = data.get('correoUsuario').strip()  
+
+    def validar_correo(correo):
+        patron = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+        return re.match(patron, correo) is not None
+
+    def generar_contrasena_temporal(length=8):
+        caracteres = string.ascii_letters + string.digits
+        return ''.join(random.choice(caracteres) for _ in range(length))
 
     if not validar_correo(email):
         return jsonify({"error": "Invalid email format"}), 400
@@ -620,7 +617,7 @@ Your new temporary password is: {new_password}
 We strongly recommend that you follow these security steps:
 
 1. Log in using your new temporary password.
-2. Change your password** immediately after logging in. 
+2. Change your password immediately after logging in. 
    You can do this in the settings section of your profile.
 3. Make sure that your new password is strong and secure. 
    Some recommendations for creating a strong password include:
@@ -636,7 +633,7 @@ Best regards,
 
 The Support Team
         """)
-        
+
         msg["From"] = 'rdraider30@gmail.com'
         msg["To"] = email
         msg["Subject"] = "Password Reset Notification"
@@ -647,9 +644,6 @@ The Support Team
         return jsonify({"message": "Email sent successfully"}), 200
     except Exception as e:
         return jsonify({"error": f"Error sending the email: {str(e)}"}), 500
-
-
-
 
 if __name__ == "__main__":
     app.run(port=5001)  
