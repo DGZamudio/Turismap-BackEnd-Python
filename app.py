@@ -858,4 +858,4 @@ The Support Team
         return jsonify({"error": f"Error sending the email: {str(e)}"}), 500
 
 if __name__ == "__main__":
-    app.run(port=5001)  
+    app.run()  
