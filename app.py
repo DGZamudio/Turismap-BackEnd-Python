@@ -709,7 +709,7 @@ def reset_password():
     if not validar_correo(email):
         return jsonify({"error": "Invalid email format"}), 400
 
-    user = Usuarios.find_one({"correoUsuario": email})
+    user = db.Usuarios.find_one({"correoUsuario": email})
 
     if not user:
         return jsonify({"error": "User not found"}), 404
@@ -717,7 +717,7 @@ def reset_password():
     new_password = generar_contrasena_temporal()
     new_password_hashed = generate_password_hash(new_password)
 
-    Usuarios.update_one({'_id': user['_id']}, {'$set': {'contrasenaUsuario': new_password_hashed}})
+    db.Usuarios.update_one({'_id': user['_id']}, {'$set': {'contrasenaUsuario': new_password_hashed}})
 
     try:
         servidor = smtplib.SMTP("smtp.gmail.com", 587)
