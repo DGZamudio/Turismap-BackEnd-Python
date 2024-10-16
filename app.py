@@ -1,6 +1,12 @@
 from flask import Flask, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
+import re  
+import smtplib  
+import random
+import string
+from passlib.context import CryptContext
+from email.mime.text import MIMEText 
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_cors import CORS
 from bson import ObjectId
@@ -10,9 +16,11 @@ from math import ceil
 import base64
 from werkzeug.utils import secure_filename
 from gridfs import GridFS
-#from dotenv import load_dotenv
+from datetime import datetime
 
-#load_dotenv()
+from dotenv import load_dotenv
+
+load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
@@ -688,6 +696,166 @@ def getC(uid,lid):
 
 
 
-#Start app
+# 
+usuarios = db['Usuarios']
+sitioturisticos = db['SitioTuristicos']
+calificaciones = db['Calificacion']
+
+@app.route('/calificar', methods=['POST'])
+def calificar():
+    data = request.json
+
+    usuario_id = data.get('usuario_id')
+    sitioturistico_id = data.get('sitioturistico_id')
+    calificacion = data.get('calificacion')
+    comentario = data.get('comentario', '')  
+
+    if not all([usuario_id, sitioturistico_id, calificacion]):
+        return jsonify({'mensaje': 'Faltan datos obligatorios'}), 400
+
+    try:
+        calificacion_data = {
+            "usuario_id": ObjectId(usuario_id),
+            "sitioturistico_id": ObjectId(sitioturistico_id),
+            "calificacion": calificacion,
+            "comentario": comentario
+        }
+        calificaciones.insert_one(calificacion_data)
+
+        return jsonify({'mensaje': 'Calificación registrada con éxito'}), 201
+
+    except Exception as e:
+        return jsonify({'mensaje': 'Error al registrar la calificación', 'error': str(e)}), 500
+
+
+# Colección
+calificaciones = db['Calificacion']
+
+@app.route('/average-site-rating', methods=['GET'])
+def calificaciones_count():
+    sitioturistico_id = request.args.get('id')
+
+    if not sitioturistico_id:
+        return jsonify({'error': 'id es requerido'}), 400
+
+    try:
+        sitioturistico_id = ObjectId(sitioturistico_id)
+    except Exception as e:
+        return jsonify({'error': 'ID inválido'}), 400
+
+    calificaciones_docs = calificaciones.find(
+        {'sitioturistico_id': sitioturistico_id},
+        {'calificacion': 1, '_id': 0}
+    )
+
+    calificaciones_list = [doc['calificacion'] for doc in calificaciones_docs]
+
+
+    sumStar = sum(calificaciones_list)
+    count = len(calificaciones_list)
+    prom = sumStar/count
+    result = {
+        'Promedio': prom
+    }
+
+    return jsonify(result)
+#
+@app.route('/calificaciones_sitio', methods=['GET'])
+def obtener_calificaciones_por_sitio():
+    sitio_id = request.args.get('id')  
+
+    if not sitio_id:
+        return jsonify({"error": "Se requiere el ID del sitio turístico"}), 400
+
+    try:
+        calificaciones_docs = calificaciones.find(
+            {'sitioturistico_id': ObjectId(sitio_id)},
+            {'calificacion': 1, 'comentario': 1, 'usuario_id': 1, '_id': 0}
+        )
+
+        resultados = []
+        for doc in calificaciones_docs:
+            usuario = usuarios.find_one({'_id': ObjectId(doc['usuario_id'])}, {'nombreUsuario': 1, '_id': 0})
+            if usuario:
+                resultados.append({
+                    "nombreUsuario": usuario['nombreUsuario'],  
+                    "calificacion": doc['calificacion'],
+                    "comentario": doc.get('comentario', "Sin comentario")
+                })
+
+        return jsonify({"resultados": resultados}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e), "mensaje": "Error al procesar la solicitud"}), 500
+
+
+@app.route("/reset_contrasena", methods=['POST'])
+def reset_password():
+    data = request.json
+    email = data.get('correoUsuario').strip()  
+
+    def validar_correo(correo):
+        patron = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+        return re.match(patron, correo) is not None
+
+    def generar_contrasena_temporal(length=8):
+        caracteres = string.ascii_letters + string.digits
+        return ''.join(random.choice(caracteres) for _ in range(length))
+
+    if not validar_correo(email):
+        return jsonify({"error": "Invalid email format"}), 400
+
+    user = usuarios.find_one({"correoUsuario": email})
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    new_password = generar_contrasena_temporal()
+    new_password_hashed = generate_password_hash(new_password)
+
+    usuarios.update_one({'_id': user['_id']}, {'$set': {'contrasenaUsuario': new_password_hashed}})
+
+    try:
+        servidor = smtplib.SMTP("smtp.gmail.com", 587)
+        servidor.starttls()
+        servidor.login('rdraider30@gmail.com', 'b s c o k y b y c l g q h f n z')
+
+        msg = MIMEText(f"""
+Hello {user['nombreUsuario']},
+
+We have received a request to reset your password in our system.
+Your new temporary password is: {new_password}
+
+We strongly recommend that you follow these security steps:
+
+1. Log in using your new temporary password.
+2. Change your password immediately after logging in. 
+   You can do this in the settings section of your profile.
+3. Make sure that your new password is strong and secure. 
+   Some recommendations for creating a strong password include:
+   - Use a combination of uppercase and lowercase letters.
+   - Include numbers and symbols.
+   - Avoid using easily guessable personal information (like your name or birthdate).
+
+If you did not request this password reset, please contact our support team as soon as possible to secure your account.
+
+Thank you for using our services. If you have any questions or need further assistance, feel free to reach out to us.
+
+Best regards,
+
+The Support Team
+        """)
+
+        msg["From"] = 'rdraider30@gmail.com'
+        msg["To"] = email
+        msg["Subject"] = "Password Reset Notification"
+
+        servidor.sendmail("rdraider30@gmail.com", email, msg.as_string())
+        servidor.quit()
+
+        return jsonify({"message": "Email sent successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error sending the email: {str(e)}"}), 500
+
 if __name__ == "__main__":
-    app.run()
+    app.run(port=5001)  
