@@ -307,7 +307,7 @@ def registerTuristicPlace():
 
 @app.route('/last',methods=['GET'])
 def last():
-    sitios=db.SitiosTuristicos.find().limit(5)
+    sitios=db.SitiosTuristicos.find().sort("Promedio",-1).limit(5)
     result=[]
     for sitio in sitios:
         file_id = sitio.get("image_id")
@@ -625,6 +625,10 @@ def calificaciones_count(id):
     result = {
         'Promedio': prom
     }
+
+    db.SitiosTuristicos.update_one(
+        {'_id': id},
+        {'$set': {'Promedio': prom}})
 
     return jsonify(result)
 
