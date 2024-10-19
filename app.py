@@ -1,6 +1,12 @@
 from flask import Flask, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
+import re  
+import smtplib  
+import random
+import string
+from passlib.context import CryptContext
+from email.mime.text import MIMEText 
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_cors import CORS
 from bson import ObjectId
@@ -10,6 +16,8 @@ from math import ceil
 import base64
 from werkzeug.utils import secure_filename
 from gridfs import GridFS
+from datetime import datetime
+
 #from dotenv import load_dotenv
 
 #load_dotenv()
@@ -689,9 +697,73 @@ def getC(uid,lid):
     else:
         return jsonify({'mensaje': 'No se encontraron calificaciones'}), 404
 
+@app.route("/reset_contrasena", methods=['POST'])
+def reset_password():
+    data = request.json
+    email = data.get('correoUsuario').strip()  
 
+    def validar_correo(correo):
+        patron = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+        return re.match(patron, correo) is not None
 
+    def generar_contrasena_temporal(length=8):
+        caracteres = string.ascii_letters + string.digits
+        return ''.join(random.choice(caracteres) for _ in range(length))
 
-#Start app
+    if not validar_correo(email):
+        return jsonify({"error": "Invalid email format"}), 400
+
+    user = db.Usuarios.find_one({"correoUsuario": email})
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    new_password = generar_contrasena_temporal()
+    new_password_hashed = generate_password_hash(new_password)
+
+    db.Usuarios.update_one({'_id': user['_id']}, {'$set': {'contrasenaUsuario': new_password_hashed}})
+
+    try:
+        servidor = smtplib.SMTP("smtp.gmail.com", 587)
+        servidor.starttls()
+        servidor.login('rdraider30@gmail.com', 'b s c o k y b y c l g q h f n z')
+
+        msg = MIMEText(f"""
+Hello {user['nombreUsuario']},
+
+We have received a request to reset your password in our system.
+Your new temporary password is: {new_password}
+
+We strongly recommend that you follow these security steps:
+
+1. Log in using your new temporary password.
+2. Change your password immediately after logging in. 
+   You can do this in the settings section of your profile.
+3. Make sure that your new password is strong and secure. 
+   Some recommendations for creating a strong password include:
+   - Use a combination of uppercase and lowercase letters.
+   - Include numbers and symbols.
+   - Avoid using easily guessable personal information (like your name or birthdate).
+
+If you did not request this password reset, please contact our support team as soon as possible to secure your account.
+
+Thank you for using our services. If you have any questions or need further assistance, feel free to reach out to us.
+
+Best regards,
+
+The Support Team
+        """)
+
+        msg["From"] = 'rdraider30@gmail.com'
+        msg["To"] = email
+        msg["Subject"] = "Password Reset Notification"
+
+        servidor.sendmail("rdraider30@gmail.com", email, msg.as_string())
+        servidor.quit()
+
+        return jsonify({"message": "Email sent successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error sending the email: {str(e)}"}), 500
+
 if __name__ == "__main__":
-    app.run()
+    app.run()  
