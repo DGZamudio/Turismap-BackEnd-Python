@@ -35,7 +35,7 @@ fs = GridFS(db)
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
-    user = db.Usuarios.find_one({'correoUsuario': data.get('correoUsuario')})
+    user = db.Usuarios.find_one({'correoUsuario': data.get('correoUsuario').lower()})
     if user:
         if check_password_hash(user['contrasenaUsuario'], data.get('contrasenaUsuario')):
             if user['estadoUsuario'] != '1':
@@ -59,7 +59,7 @@ def register():
     data = request.json
     nuevo_usuario = Usuario(
         nombreUsuario=data['nombreUsuario'],
-        correoUsuario=data['correoUsuario'],
+        correoUsuario=data['correoUsuario'].lower(),
         contrasenaUsuario=data['contrasenaUsuario'],
         estadoUsuario=data['estadoUsuario'],
         rolUsuario=data['rolUsuario']
@@ -700,7 +700,7 @@ def getC(uid,lid):
 @app.route("/reset_contrasena", methods=['POST'])
 def reset_password():
     data = request.json
-    email = data.get('correoUsuario').strip()  
+    email = data.get('correoUsuario').strip().lower()  
 
     def validar_correo(correo):
         patron = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
